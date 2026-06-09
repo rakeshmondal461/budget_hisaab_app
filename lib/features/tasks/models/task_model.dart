@@ -46,8 +46,6 @@ class TaskModel {
   final TaskStatus status;
   final TaskPriority priority;
   final DateTime? deadline;
-  final double estimatedHours;
-  final int focusedMinutes; // total minutes from focus sessions
   final List<String> tags;
   final DateTime createdAt;
   final DateTime? completedAt;
@@ -59,8 +57,6 @@ class TaskModel {
     this.status = TaskStatus.todo,
     this.priority = TaskPriority.medium,
     this.deadline,
-    this.estimatedHours = 1.0,
-    this.focusedMinutes = 0,
     this.tags = const [],
     DateTime? createdAt,
     this.completedAt,
@@ -72,9 +68,6 @@ class TaskModel {
       DateTime.now().isAfter(deadline!) &&
       status != TaskStatus.done;
 
-  double get progressPercent =>
-      estimatedHours <= 0 ? 0 : (focusedMinutes / 60 / estimatedHours).clamp(0.0, 1.0);
-
   Map<String, dynamic> toJson() => {
     'id': id,
     'title': title,
@@ -82,8 +75,6 @@ class TaskModel {
     'status': status.name,
     'priority': priority.name,
     'deadline': deadline?.toIso8601String(),
-    'estimatedHours': estimatedHours,
-    'focusedMinutes': focusedMinutes,
     'tags': tags,
     'createdAt': createdAt.toIso8601String(),
     'completedAt': completedAt?.toIso8601String(),
@@ -102,8 +93,6 @@ class TaskModel {
       orElse: () => TaskPriority.medium,
     ),
     deadline: json['deadline'] != null ? DateTime.parse(json['deadline']) : null,
-    estimatedHours: (json['estimatedHours'] as num?)?.toDouble() ?? 1.0,
-    focusedMinutes: json['focusedMinutes'] ?? 0,
     tags: List<String>.from(json['tags'] ?? []),
     createdAt: DateTime.parse(json['createdAt'] ?? DateTime.now().toIso8601String()),
     completedAt: json['completedAt'] != null ? DateTime.parse(json['completedAt']) : null,
@@ -115,8 +104,6 @@ class TaskModel {
     TaskStatus? status,
     TaskPriority? priority,
     DateTime? deadline,
-    double? estimatedHours,
-    int? focusedMinutes,
     List<String>? tags,
     DateTime? completedAt,
   }) => TaskModel(
@@ -126,8 +113,6 @@ class TaskModel {
     status: status ?? this.status,
     priority: priority ?? this.priority,
     deadline: deadline ?? this.deadline,
-    estimatedHours: estimatedHours ?? this.estimatedHours,
-    focusedMinutes: focusedMinutes ?? this.focusedMinutes,
     tags: tags ?? this.tags,
     createdAt: createdAt,
     completedAt: completedAt ?? this.completedAt,

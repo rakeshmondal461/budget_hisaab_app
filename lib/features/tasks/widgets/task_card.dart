@@ -87,10 +87,36 @@ class TaskCard extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
-                  // Focus button
+                  // Move backward
+                  if (task.status != TaskStatus.todo)
+                    GestureDetector(
+                      onTap: () {
+                        final newStatus = task.status == TaskStatus.done
+                            ? TaskStatus.inProgress
+                            : TaskStatus.todo;
+                        provider.moveTaskStatus(task.id, newStatus);
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.all(6),
+                        margin: const EdgeInsets.only(right: 8),
+                        decoration: BoxDecoration(
+                          color:
+                              theme.colorScheme.primary.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Icon(Icons.arrow_back,
+                            size: 18, color: theme.colorScheme.primary),
+                      ),
+                    ),
+                  // Move forward
                   if (task.status != TaskStatus.done)
                     GestureDetector(
-                      onTap: () => context.push('/tasks/${task.id}/focus'),
+                      onTap: () {
+                        final newStatus = task.status == TaskStatus.todo
+                            ? TaskStatus.inProgress
+                            : TaskStatus.done;
+                        provider.moveTaskStatus(task.id, newStatus);
+                      },
                       child: Container(
                         padding: const EdgeInsets.all(6),
                         decoration: BoxDecoration(
@@ -98,7 +124,7 @@ class TaskCard extends StatelessWidget {
                               theme.colorScheme.primary.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(8),
                         ),
-                        child: Icon(Icons.play_arrow,
+                        child: Icon(Icons.arrow_forward,
                             size: 18, color: theme.colorScheme.primary),
                       ),
                     ),
@@ -117,29 +143,9 @@ class TaskCard extends StatelessWidget {
 
               const SizedBox(height: 10),
 
-              // Progress bar
-              ClipRRect(
-                borderRadius: BorderRadius.circular(4),
-                child: LinearProgressIndicator(
-                  value: task.progressPercent,
-                  minHeight: 4,
-                  backgroundColor: priorityColor.withValues(alpha: 0.1),
-                  valueColor: AlwaysStoppedAnimation(priorityColor),
-                ),
-              ),
-
-              const SizedBox(height: 10),
-
               // Footer
               Row(
                 children: [
-                  Icon(Icons.timer_outlined,
-                      size: 14, color: theme.textTheme.bodySmall?.color),
-                  const SizedBox(width: 4),
-                  Text(
-                    '${(task.focusedMinutes / 60).toStringAsFixed(1)}/${task.estimatedHours.toStringAsFixed(1)}h',
-                    style: theme.textTheme.bodySmall,
-                  ),
                   const Spacer(),
                   if (task.deadline != null) ...[
                     Icon(

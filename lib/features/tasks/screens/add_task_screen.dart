@@ -22,7 +22,6 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
 
   TaskPriority _priority = TaskPriority.medium;
   DateTime? _deadline;
-  double _estimatedHours = 1.0;
   TaskModel? _editTask;
 
   @override
@@ -38,7 +37,6 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
           setState(() {
             _priority = _editTask!.priority;
             _deadline = _editTask!.deadline;
-            _estimatedHours = _editTask!.estimatedHours;
           });
         }
       });
@@ -193,54 +191,6 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
             ),
             const SizedBox(height: 12),
 
-            // ── Estimated Focus Hours ──────────────────────────────────────
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: theme.cardColor,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Icon(Icons.timer_outlined,
-                          color: theme.colorScheme.primary),
-                      const SizedBox(width: 8),
-                      Text('Estimated Focus Time',
-                          style: theme.textTheme.titleMedium),
-                      const Spacer(),
-                      Text(
-                        '${_estimatedHours.toStringAsFixed(1)}h',
-                        style: theme.textTheme.titleLarge?.copyWith(
-                          color: theme.colorScheme.primary,
-                        ),
-                      ),
-                    ],
-                  ),
-                  Slider(
-                    value: _estimatedHours,
-                    min: 0.5,
-                    max: 20,
-                    divisions: 39,
-                    onChanged: (v) => setState(() => _estimatedHours = v),
-                    activeColor: theme.colorScheme.primary,
-                  ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: const [
-                      Text('30 min',
-                          style: TextStyle(fontSize: 11, color: Colors.grey)),
-                      Text('20 hours',
-                          style: TextStyle(fontSize: 11, color: Colors.grey)),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 12),
-
             // ── Tags ───────────────────────────────────────────────────────
             TextFormField(
               controller: _tagsCtrl,
@@ -288,7 +238,6 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
         description: _descCtrl.text.trim(),
         priority: _priority,
         deadline: _deadline,
-        estimatedHours: _estimatedHours,
         tags: tags,
       ));
     } else {
@@ -297,7 +246,6 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
         description: _descCtrl.text.trim(),
         priority: _priority,
         deadline: _deadline,
-        estimatedHours: _estimatedHours,
         tags: tags,
       ));
     }

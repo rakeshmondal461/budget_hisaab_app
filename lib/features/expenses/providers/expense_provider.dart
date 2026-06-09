@@ -152,6 +152,20 @@ class ExpenseProvider extends ChangeNotifier {
     await _save();
   }
 
+  Future<void> importExpenses(List<ExpenseModel> imported) async {
+    int addedCount = 0;
+    for (final e in imported) {
+      if (!_expenses.any((ex) => ex.id == e.id)) {
+        _expenses.insert(0, e);
+        addedCount++;
+      }
+    }
+    if (addedCount > 0) {
+      notifyListeners();
+      await _save();
+    }
+  }
+
   // ── Persistence ────────────────────────────────────────────────────────────
   Future<void> load() async {
     _isLoading = true;

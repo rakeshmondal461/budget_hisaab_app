@@ -46,7 +46,6 @@ class ExportService {
   Future<void> exportAllToJson({
     required List<Map<String, dynamic>> expenses,
     required List<Map<String, dynamic>> tasks,
-    required List<Map<String, dynamic>> focusSessions,
     required Map<String, dynamic> budgets,
   }) async {
     final data = {
@@ -54,7 +53,6 @@ class ExportService {
       'expenses': expenses,
       'budgets': budgets,
       'tasks': tasks,
-      'focusSessions': focusSessions,
     };
     // Write to temp dir so share_plus can access it without permissions
     final content = const JsonEncoder.withIndent('  ').convert(data);
@@ -100,15 +98,13 @@ class ExportService {
   Future<void> exportTasksToCsv(List<Map<String, dynamic>> tasks) async {
     final buf = StringBuffer();
     buf.writeln(
-        'Title,Status,Priority,Deadline,Estimated Hours,Focused Minutes,Tags');
+        'Title,Status,Priority,Deadline,Tags');
     for (final t in tasks) {
       buf.writeln([
         _escapeCsv(t['title'] ?? ''),
         _escapeCsv(t['status'] ?? ''),
         _escapeCsv(t['priority'] ?? ''),
         _escapeCsv(t['deadline'] ?? ''),
-        t['estimatedHours'] ?? 0,
-        t['focusedMinutes'] ?? 0,
         _escapeCsv((t['tags'] as List?)?.join('; ') ?? ''),
       ].join(','));
     }
@@ -119,7 +115,6 @@ class ExportService {
   Future<void> exportAllToCsv({
     required List<Map<String, dynamic>> expenses,
     required List<Map<String, dynamic>> tasks,
-    required List<Map<String, dynamic>> focusSessions,
     required Map<String, dynamic> budgets,
   }) async {
     final buf = StringBuffer();
@@ -141,32 +136,17 @@ class ExportService {
     // Tasks section
     buf.writeln('=== TASKS ===');
     buf.writeln(
-        'Title,Status,Priority,Deadline,Estimated Hours,Focused Minutes,Tags');
+        'Title,Status,Priority,Deadline,Tags');
     for (final t in tasks) {
       buf.writeln([
         _escapeCsv(t['title'] ?? ''),
         _escapeCsv(t['status'] ?? ''),
         _escapeCsv(t['priority'] ?? ''),
         _escapeCsv(t['deadline'] ?? ''),
-        t['estimatedHours'] ?? 0,
-        t['focusedMinutes'] ?? 0,
         _escapeCsv((t['tags'] as List?)?.join('; ') ?? ''),
       ].join(','));
     }
     buf.writeln();
-
-    // Focus sessions section
-    buf.writeln('=== FOCUS SESSIONS ===');
-    buf.writeln('TaskID,Start,End,Duration Minutes,Completed');
-    for (final s in focusSessions) {
-      buf.writeln([
-        _escapeCsv(s['taskId'] ?? ''),
-        _escapeCsv(s['startTime'] ?? ''),
-        _escapeCsv(s['endTime'] ?? ''),
-        s['durationMinutes'] ?? 0,
-        s['completed'] == true ? 'Yes' : 'No',
-      ].join(','));
-    }
 
     final file = await _writeExportFile('all_data_$_ts.csv', buf.toString());
     await Share.shareXFiles([XFile(file.path)], text: 'HiSaab CSV Export');
@@ -225,8 +205,6 @@ class ExportService {
       'Status',
       'Priority',
       'Deadline',
-      'Estimated Hours',
-      'Focused Hours',
       'Tags'
     ];
     for (int i = 0; i < headers.length; i++) {
@@ -246,12 +224,6 @@ class ExportService {
       sheet.getRangeByIndex(row, 4).setText(t['deadline'] ?? '');
       sheet
           .getRangeByIndex(row, 5)
-          .setNumber((t['estimatedHours'] as num?)?.toDouble() ?? 0);
-      sheet
-          .getRangeByIndex(row, 6)
-          .setNumber(((t['focusedMinutes'] as num?)?.toDouble() ?? 0) / 60);
-      sheet
-          .getRangeByIndex(row, 7)
           .setText((t['tags'] as List?)?.join(', ') ?? '');
     }
 

@@ -4,7 +4,6 @@ import '../../features/expenses/screens/add_expense_screen.dart';
 import '../../features/expenses/models/expense_model.dart';
 import '../../features/tasks/screens/tasks_screen.dart';
 import '../../features/tasks/screens/add_task_screen.dart';
-import '../../features/tasks/screens/focus_timer_screen.dart';
 import '../../features/tasks/screens/task_detail_screen.dart';
 import '../../features/budget/screens/budget_savings_screen.dart';
 import '../../features/settings/screens/settings_screen.dart';
@@ -50,11 +49,6 @@ final GoRouter appRouter = GoRouter(
       path: '/tasks/:id',
       builder: (context, state) =>
           TaskDetailScreen(taskId: state.pathParameters['id']!),
-    ),
-    GoRoute(
-      path: '/tasks/:id/focus',
-      builder: (context, state) =>
-          FocusTimerScreen(taskId: state.pathParameters['id']!),
     ),
     // Settings
     GoRoute(

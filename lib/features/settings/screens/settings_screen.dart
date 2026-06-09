@@ -5,6 +5,7 @@ import '../../../core/theme/theme_provider.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/storage/google_drive_service.dart';
 import '../../../core/export/export_service.dart';
+import '../../../core/import/import_service.dart';
 import '../../../core/storage/local_storage_service.dart';
 import '../../../core/services/notification_service.dart';
 import '../../../features/expenses/providers/expense_provider.dart';
@@ -115,6 +116,44 @@ class SettingsScreen extends StatelessWidget {
                 }
               },
             ),
+
+          // ── Import ────────────────────────────────────────────────────────
+          _SectionHeader('Data Import'),
+          _SettingsTile(
+            icon: Icons.upload_file,
+            iconColor: AppTheme.accentDark,
+            title: 'Import Expenses (JSON)',
+            subtitle: 'Restore from a .json file',
+            onTap: () => _importData(context, type: 'expenses', format: 'json'),
+          ),
+          _SettingsTile(
+            icon: Icons.table_view,
+            iconColor: AppTheme.warningColor,
+            title: 'Import Expenses (CSV)',
+            subtitle: 'Restore from a .csv file',
+            onTap: () => _importData(context, type: 'expenses', format: 'csv'),
+          ),
+          _SettingsTile(
+            icon: Icons.upload_file,
+            iconColor: AppTheme.successColor,
+            title: 'Import Tasks (JSON)',
+            subtitle: 'Restore tasks from a .json file',
+            onTap: () => _importData(context, type: 'tasks', format: 'json'),
+          ),
+          _SettingsTile(
+            icon: Icons.table_view,
+            iconColor: AppTheme.primaryDark,
+            title: 'Import Tasks (CSV)',
+            subtitle: 'Restore tasks from a .csv file',
+            onTap: () => _importData(context, type: 'tasks', format: 'csv'),
+          ),
+          _SettingsTile(
+            icon: Icons.settings_backup_restore,
+            iconColor: AppTheme.successColor,
+            title: 'Import All Data (JSON)',
+            subtitle: 'Restore expenses and tasks',
+            onTap: () => _importData(context, type: 'all', format: 'json'),
+          ),
 
           // ── Export ────────────────────────────────────────────────────────
           _SectionHeader('Data Export'),
@@ -305,21 +344,18 @@ class SettingsScreen extends StatelessWidget {
     try {
       final expenses = expenseProvider.toJsonList();
       final tasks = taskProvider.toJsonList();
-      final sessions = taskProvider.sessionsToJsonList();
       final budgets = expenseProvider.budgetsToJson();
 
       if (format == 'csv') {
         await exportService.exportAllToCsv(
           expenses: expenses,
           tasks: tasks,
-          focusSessions: sessions,
           budgets: budgets,
         );
       } else {
         await exportService.exportAllToJson(
           expenses: expenses,
           tasks: tasks,
-          focusSessions: sessions,
           budgets: budgets,
         );
       }
@@ -329,6 +365,48 @@ class SettingsScreen extends StatelessWidget {
           SnackBar(
               content: Text('Export failed: $e'),
               backgroundColor: AppTheme.errorColor),
+        );
+      }
+    }
+  }
+
+  Future<void> _importData(BuildContext context, {required String type, required String format}) async {
+    final expenseProvider = context.read<ExpenseProvider>();
+    final taskProvider = context.read<TaskProvider>();
+    final importService = ImportService();
+
+    try {
+      if (type == 'all' && format == 'json') {
+        await importService.importAllFromJson(expenseProvider, taskProvider);
+      } else if (type == 'expenses') {
+        if (format == 'json') {
+          await importService.importExpensesFromJson(expenseProvider);
+        } else {
+          await importService.importExpensesFromCsv(expenseProvider);
+        }
+      } else if (type == 'tasks') {
+        if (format == 'json') {
+          await importService.importTasksFromJson(taskProvider);
+        } else {
+          await importService.importTasksFromCsv(taskProvider);
+        }
+      }
+
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Import completed successfully!'),
+            backgroundColor: AppTheme.successColor,
+          ),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Import failed: $e'),
+            backgroundColor: AppTheme.errorColor,
+          ),
         );
       }
     }

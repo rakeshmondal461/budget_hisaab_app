@@ -4,8 +4,6 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../providers/task_provider.dart';
 import '../models/task_model.dart';
-import '../models/focus_session_model.dart';
-import '../widgets/focus_progress_ring.dart';
 import '../../../core/theme/app_theme.dart';
 
 class TaskDetailScreen extends StatelessWidget {
@@ -25,7 +23,6 @@ class TaskDetailScreen extends StatelessWidget {
       );
     }
 
-    final sessions = provider.sessionsForTask(taskId);
     final priorityColor = Color(task.priority.colorValue);
 
     return Scaffold(
@@ -144,34 +141,10 @@ class TaskDetailScreen extends StatelessWidget {
                 // Progress ring & stats
                 Row(
                   children: [
-                    FocusProgressRing(
-                      progress: task.progressPercent,
-                      size: 100,
-                      color: priorityColor,
-                      label:
-                          '${(task.progressPercent * 100).toStringAsFixed(0)}%',
-                    ),
-                    const SizedBox(width: 20),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          _StatRow(
-                            icon: Icons.timer,
-                            label: 'Focused',
-                            value:
-                                '${(task.focusedMinutes / 60).toStringAsFixed(1)}h',
-                          ),
-                          _StatRow(
-                            icon: Icons.flag_outlined,
-                            label: 'Estimated',
-                            value: '${task.estimatedHours.toStringAsFixed(1)}h',
-                          ),
-                          _StatRow(
-                            icon: Icons.check_circle_outline,
-                            label: 'Sessions',
-                            value: '${sessions.length}',
-                          ),
                           if (task.deadline != null)
                             _StatRow(
                               icon: Icons.event,
@@ -251,27 +224,6 @@ class TaskDetailScreen extends StatelessWidget {
                   const SizedBox(height: 16),
                 ],
 
-                // Focus Sessions
-                Text('Focus Sessions', style: theme.textTheme.titleMedium),
-                const SizedBox(height: 8),
-                if (sessions.isEmpty)
-                  Container(
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: theme.cardColor,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Center(
-                      child: Text(
-                        'No focus sessions yet.\nStart your first Pomodoro!',
-                        textAlign: TextAlign.center,
-                        style: theme.textTheme.bodySmall,
-                      ),
-                    ),
-                  )
-                else
-                  ...sessions.take(10).map((s) => _SessionTile(session: s)),
-
                 const SizedBox(height: 24),
                 Text(
                   'Created ${DateFormat('MMMM d, yyyy').format(task.createdAt)}',
@@ -284,13 +236,6 @@ class TaskDetailScreen extends StatelessWidget {
           ),
         ],
       ),
-      floatingActionButton: task.status != TaskStatus.done
-          ? FloatingActionButton.extended(
-              onPressed: () => context.push('/tasks/$taskId/focus'),
-              icon: const Icon(Icons.play_arrow),
-              label: const Text('Start Focus'),
-            )
-          : null,
     );
   }
 
@@ -300,7 +245,7 @@ class TaskDetailScreen extends StatelessWidget {
       builder: (_) => AlertDialog(
         title: const Text('Delete Task'),
         content: const Text(
-            'This will permanently delete the task and all its focus sessions.'),
+            'This will permanently delete the task.'),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(context, false),
@@ -348,58 +293,6 @@ class _StatRow extends StatelessWidget {
             style: theme.textTheme.bodySmall?.copyWith(
               fontWeight: FontWeight.w700,
               color: valueColor,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _SessionTile extends StatelessWidget {
-  final FocusSessionModel session;
-  const _SessionTile({required this.session});
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Container(
-      margin: const EdgeInsets.only(bottom: 6),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-      decoration: BoxDecoration(
-        color: theme.cardColor,
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: Row(
-        children: [
-          Icon(
-            session.completed
-                ? Icons.check_circle
-                : Icons.radio_button_unchecked,
-            color: session.completed ? AppTheme.successColor : Colors.grey,
-            size: 18,
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  DateFormat('MMM d, h:mm a').format(session.startTime),
-                  style: theme.textTheme.bodySmall
-                      ?.copyWith(fontWeight: FontWeight.w600),
-                ),
-                Text(
-                  session.completed ? 'Completed' : 'Ended early',
-                  style: theme.textTheme.bodySmall,
-                ),
-              ],
-            ),
-          ),
-          Text(
-            '${session.durationMinutes} min',
-            style: theme.textTheme.titleMedium?.copyWith(
-              color: AppTheme.primaryDark,
             ),
           ),
         ],
