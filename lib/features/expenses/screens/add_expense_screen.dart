@@ -20,7 +20,8 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
   final _amountCtrl = TextEditingController();
   final _noteCtrl = TextEditingController();
 
-  ExpenseCategory _category = ExpenseCategory.food;
+  ExpenseCategory _expenseCategory = ExpenseCategory.food;
+  IncomeCategory _incomeCategory = IncomeCategory.salary;
   DateTime _date = DateTime.now();
   bool _isIncome = false;
 
@@ -31,9 +32,13 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
       final e = widget.editExpense!;
       _amountCtrl.text = e.amount.toStringAsFixed(2);
       _noteCtrl.text = e.note;
-      _category = e.category;
       _date = e.date;
       _isIncome = e.isIncome;
+      if (e.isIncome) {
+        _incomeCategory = e.incomeCategory ?? IncomeCategory.salary;
+      } else {
+        _expenseCategory = e.expenseCategory ?? ExpenseCategory.food;
+      }
     }
   }
 
@@ -112,14 +117,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                       icon: Icons.arrow_upward,
                       isSelected: !_isIncome,
                       color: AppTheme.errorColor,
-                      onTap: () => setState(() {
-                        _isIncome = false;
-                        if (_category == ExpenseCategory.salary ||
-                            _category == ExpenseCategory.freelance ||
-                            _category == ExpenseCategory.investment) {
-                          _category = ExpenseCategory.food;
-                        }
-                      }),
+                      onTap: () => setState(() => _isIncome = false),
                     ),
                   ),
                   Expanded(
@@ -128,15 +126,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                       icon: Icons.arrow_downward,
                       isSelected: _isIncome,
                       color: AppTheme.successColor,
-                      onTap: () => setState(() {
-                        _isIncome = true;
-                        if (_category != ExpenseCategory.salary &&
-                            _category != ExpenseCategory.freelance &&
-                            _category != ExpenseCategory.investment &&
-                            _category != ExpenseCategory.other) {
-                          _category = ExpenseCategory.salary;
-                        }
-                      }),
+                      onTap: () => setState(() => _isIncome = true),
                     ),
                   ),
                 ],
@@ -171,60 +161,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
             // ── Category ───────────────────────────────────────────────────
             Text('Category', style: theme.textTheme.titleMedium),
             const SizedBox(height: 10),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: ExpenseCategory.values.where((cat) {
-                if (_isIncome) {
-                  return cat == ExpenseCategory.salary ||
-                      cat == ExpenseCategory.freelance ||
-                      cat == ExpenseCategory.investment ||
-                      cat == ExpenseCategory.other;
-                } else {
-                  return cat != ExpenseCategory.salary &&
-                      cat != ExpenseCategory.freelance &&
-                      cat != ExpenseCategory.investment;
-                }
-              }).map((cat) {
-                final isSelected = _category == cat;
-                return GestureDetector(
-                  onTap: () => setState(() => _category = cat),
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 14, vertical: 10),
-                    decoration: BoxDecoration(
-                      color: isSelected
-                          ? AppTheme.categoryColors[
-                              cat.index % AppTheme.categoryColors.length]
-                          : theme.cardColor,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: isSelected
-                            ? AppTheme.categoryColors[
-                                cat.index % AppTheme.categoryColors.length]
-                            : Colors.transparent,
-                        width: 1.5,
-                      ),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(cat.emoji, style: const TextStyle(fontSize: 16)),
-                        const SizedBox(width: 6),
-                        Text(
-                          cat.label,
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: isSelected ? Colors.white : null,
-                            fontWeight: isSelected ? FontWeight.w600 : null,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              }).toList(),
-            ),
+            _isIncome ? _buildIncomeCategories(theme) : _buildExpenseCategories(theme),
             const SizedBox(height: 20),
 
             // ── Date ───────────────────────────────────────────────────────
@@ -289,13 +226,99 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
     );
   }
 
+  // ── Expense Category Chips ──────────────────────────────────────────────
+  Widget _buildExpenseCategories(ThemeData theme) {
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: ExpenseCategory.values.map((cat) {
+        final isSelected = _expenseCategory == cat;
+        final color = AppTheme.categoryColors[
+            cat.index % AppTheme.categoryColors.length];
+        return GestureDetector(
+          onTap: () => setState(() => _expenseCategory = cat),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            decoration: BoxDecoration(
+              color: isSelected ? color : theme.cardColor,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: isSelected ? color : Colors.transparent,
+                width: 1.5,
+              ),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(cat.emoji, style: const TextStyle(fontSize: 16)),
+                const SizedBox(width: 6),
+                Text(
+                  cat.label,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: isSelected ? Colors.white : null,
+                    fontWeight: isSelected ? FontWeight.w600 : null,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      }).toList(),
+    );
+  }
+
+  // ── Income Category Chips ───────────────────────────────────────────────
+  Widget _buildIncomeCategories(ThemeData theme) {
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: IncomeCategory.values.map((cat) {
+        final isSelected = _incomeCategory == cat;
+        final color = AppTheme.categoryColors[
+            (ExpenseCategory.values.length + cat.index) %
+                AppTheme.categoryColors.length];
+        return GestureDetector(
+          onTap: () => setState(() => _incomeCategory = cat),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            decoration: BoxDecoration(
+              color: isSelected ? color : theme.cardColor,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: isSelected ? color : Colors.transparent,
+                width: 1.5,
+              ),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(cat.emoji, style: const TextStyle(fontSize: 16)),
+                const SizedBox(width: 6),
+                Text(
+                  cat.label,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: isSelected ? Colors.white : null,
+                    fontWeight: isSelected ? FontWeight.w600 : null,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      }).toList(),
+    );
+  }
+
   void _save() {
     if (!_formKey.currentState!.validate()) return;
     final provider = context.read<ExpenseProvider>();
     final expense = ExpenseModel(
       id: widget.editExpense?.id,
       amount: double.parse(_amountCtrl.text),
-      category: _category,
+      expenseCategory: _isIncome ? null : _expenseCategory,
+      incomeCategory: _isIncome ? _incomeCategory : null,
       note: _noteCtrl.text.trim(),
       date: _date,
       isIncome: _isIncome,

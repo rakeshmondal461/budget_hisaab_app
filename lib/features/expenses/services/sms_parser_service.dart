@@ -80,14 +80,16 @@ class SmsParserService {
         }
 
         // Guess category from message
+        final isIncomeEntry = isCredit && !isDebit;
         final category = _guessCategory(body);
 
         expenses.add(ExpenseModel(
           amount: amount,
-          category: category,
+          expenseCategory: isIncomeEntry ? null : category,
+          incomeCategory: isIncomeEntry ? IncomeCategory.other : null,
           note: _extractNote(body),
           date: date,
-          isIncome: isCredit && !isDebit,
+          isIncome: isIncomeEntry,
           fromSms: true,
           bankName: bankName,
         ));

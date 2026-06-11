@@ -357,7 +357,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                       style: theme.textTheme.bodyMedium,
                     ),
                     subtitle: Text(
-                      '${parsed[i].isIncome ? '+' : '-'}₹${parsed[i].amount.toStringAsFixed(2)} · ${parsed[i].category.label}',
+                      '${parsed[i].isIncome ? '+' : '-'}₹${parsed[i].amount.toStringAsFixed(2)} · ${parsed[i].categoryLabel}',
                       style: theme.textTheme.bodySmall,
                     ),
                     secondary: Column(

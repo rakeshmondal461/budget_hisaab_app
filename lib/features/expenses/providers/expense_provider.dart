@@ -49,7 +49,7 @@ class ExpenseProvider extends ChangeNotifier {
   Map<ExpenseCategory, double> spendByCategory(int year, int month) {
     final map = <ExpenseCategory, double>{};
     for (final e in expensesForMonth(year, month).where((e) => !e.isIncome)) {
-      map[e.category] = (map[e.category] ?? 0) + e.amount;
+      map[e.expenseCategory!] = (map[e.expenseCategory!] ?? 0) + e.amount;
     }
     return map;
   }
@@ -83,25 +83,65 @@ class ExpenseProvider extends ChangeNotifier {
         e.date.year == day.year &&
         e.date.month == day.month &&
         e.date.day == day.day)) {
-      map[e.category] = (map[e.category] ?? 0) + e.amount;
+      map[e.expenseCategory!] = (map[e.expenseCategory!] ?? 0) + e.amount;
     }
     return map;
   }
 
-  /// Daily budget limit = totalBudget / daysInMonth.
-  /// Returns 0 if no budget is set.
+  /// Dynamic daily budget limit = remainingBudget / remainingDays.
+  /// Adjusts downward as you spend, upward if budget increases.
+  /// Returns 0 if no budget is set or the month has ended.
   double dailyBudgetLimit(int year, int month) {
+    final b = budgetFor(year, month);
+    if (b.totalBudget <= 0) return 0;
+
+    final now = DateTime.now();
+    final daysInMonth = DateTime(year, month + 1, 0).day;
+    final bool isCurrentMonth = now.year == year && now.month == month;
+
+    if (!isCurrentMonth) {
+      // For past/future months show the static average
+      return b.totalBudget / daysInMonth;
+    }
+
+    final remainingDays = daysInMonth - now.day + 1; // include today
+    if (remainingDays <= 0) return 0;
+
+    final spent = totalSpentForMonth(year, month);
+    final remaining = (b.totalBudget - spent).clamp(0.0, double.infinity);
+    return remaining / remainingDays;
+  }
+
+  /// Static daily limit for budget previews (totalBudget / daysInMonth).
+  double staticDailyBudgetLimit(int year, int month) {
     final b = budgetFor(year, month);
     if (b.totalBudget <= 0) return 0;
     final days = DateTime(year, month + 1, 0).day;
     return b.totalBudget / days;
   }
 
-  /// Per-category daily limit = categoryBudget / daysInMonth.
+  /// Per-category dynamic daily limit = remainingCategoryBudget / remainingDays.
   Map<ExpenseCategory, double> dailyCategoryLimits(int year, int month) {
     final b = budgetFor(year, month);
-    final days = DateTime(year, month + 1, 0).day;
-    return b.categoryBudgets.map((k, v) => MapEntry(k, v / days));
+    final now = DateTime.now();
+    final daysInMonth = DateTime(year, month + 1, 0).day;
+    final bool isCurrentMonth = now.year == year && now.month == month;
+
+    if (!isCurrentMonth) {
+      return b.categoryBudgets.map((k, v) => MapEntry(k, v / daysInMonth));
+    }
+
+    final remainingDays = daysInMonth - now.day + 1;
+    if (remainingDays <= 0) {
+      return b.categoryBudgets.map((k, v) => MapEntry(k, 0.0));
+    }
+
+    final catSpend = spendByCategory(year, month);
+    return b.categoryBudgets.map((k, v) {
+      final spent = catSpend[k] ?? 0;
+      final remaining = (v - spent).clamp(0.0, double.infinity);
+      return MapEntry(k, remaining / remainingDays);
+    });
   }
 
   // ── CRUD ───────────────────────────────────────────────────────────────────
@@ -163,6 +203,20 @@ class ExpenseProvider extends ChangeNotifier {
     if (addedCount > 0) {
       notifyListeners();
       await _save();
+    }
+  }
+
+  Future<void> importBudgets(Map<String, dynamic> importedBudgets) async {
+    bool hasChanges = false;
+    importedBudgets.forEach((key, value) {
+      if (!_budgets.containsKey(key)) {
+        _budgets[key] = BudgetModel.fromJson(value as Map<String, dynamic>);
+        hasChanges = true;
+      }
+    });
+    if (hasChanges) {
+      notifyListeners();
+      await _saveBudgets();
     }
   }
 

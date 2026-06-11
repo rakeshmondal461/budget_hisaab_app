@@ -21,7 +21,7 @@ class ExpenseCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final catColor = AppTheme.categoryColors[
-        expense.category.index % AppTheme.categoryColors.length];
+        expense.categoryColorIndex % AppTheme.categoryColors.length];
     final amountColor =
         expense.isIncome ? AppTheme.successColor : AppTheme.errorColor;
 
@@ -80,7 +80,7 @@ class ExpenseCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Center(
-                  child: Text(expense.category.emoji,
+                  child: Text(expense.categoryEmoji,
                       style: const TextStyle(fontSize: 20)),
                 ),
               ),
@@ -96,7 +96,7 @@ class ExpenseCard extends StatelessWidget {
                         Expanded(
                           child: Text(
                             expense.note.isEmpty
-                                ? expense.category.label
+                                ? expense.categoryLabel
                                 : expense.note,
                             style: theme.textTheme.titleMedium,
                             maxLines: 1,
@@ -125,7 +125,7 @@ class ExpenseCard extends StatelessWidget {
                     Row(
                       children: [
                         Text(
-                          expense.category.label,
+                          expense.categoryLabel,
                           style: theme.textTheme.bodySmall
                               ?.copyWith(color: catColor),
                         ),

@@ -45,11 +45,12 @@ class ImportService {
     final data = jsonDecode(content);
 
     List<ExpenseModel> expenses = [];
-    if (data is List) {
-      expenses = data.map((e) => ExpenseModel.fromJson(e as Map<String, dynamic>)).toList();
-    } else if (data is Map && data.containsKey('expenses')) {
-      final list = data['expenses'] as List;
-      expenses = list.map((e) => ExpenseModel.fromJson(e as Map<String, dynamic>)).toList();
+    final Iterable listSource = data is List ? data : (data is Map && data.containsKey('expenses') ? data['expenses'] : []);
+    
+    for (final e in listSource) {
+      try {
+        expenses.add(ExpenseModel.fromJson(e as Map<String, dynamic>));
+      } catch (_) {}
     }
 
     if (expenses.isNotEmpty) {
@@ -66,11 +67,12 @@ class ImportService {
     final data = jsonDecode(content);
 
     List<TaskModel> tasks = [];
-    if (data is List) {
-      tasks = data.map((e) => TaskModel.fromJson(e as Map<String, dynamic>)).toList();
-    } else if (data is Map && data.containsKey('tasks')) {
-      final list = data['tasks'] as List;
-      tasks = list.map((e) => TaskModel.fromJson(e as Map<String, dynamic>)).toList();
+    final Iterable listSource = data is List ? data : (data is Map && data.containsKey('tasks') ? data['tasks'] : []);
+    
+    for (final e in listSource) {
+      try {
+        tasks.add(TaskModel.fromJson(e as Map<String, dynamic>));
+      } catch (_) {}
     }
 
     if (tasks.isNotEmpty) {
@@ -88,17 +90,30 @@ class ImportService {
 
     if (data.containsKey('expenses')) {
       final list = data['expenses'] as List;
-      final expenses = list.map((e) => ExpenseModel.fromJson(e as Map<String, dynamic>)).toList();
+      final expenses = <ExpenseModel>[];
+      for (final e in list) {
+        try {
+          expenses.add(ExpenseModel.fromJson(e as Map<String, dynamic>));
+        } catch (_) {}
+      }
       await expenseProvider.importExpenses(expenses);
     }
 
     if (data.containsKey('tasks')) {
       final list = data['tasks'] as List;
-      final tasks = list.map((e) => TaskModel.fromJson(e as Map<String, dynamic>)).toList();
+      final tasks = <TaskModel>[];
+      for (final e in list) {
+        try {
+          tasks.add(TaskModel.fromJson(e as Map<String, dynamic>));
+        } catch (_) {}
+      }
       await taskProvider.importTasks(tasks);
     }
-    
-    // Note: Budgets are intentionally left out here to keep it simple, but could be added if needed.
+
+    if (data.containsKey('budgets')) {
+      final budgetsData = data['budgets'] as Map<String, dynamic>;
+      await expenseProvider.importBudgets(budgetsData);
+    }
   }
 
   // ── CSV Import ────────────────────────────────────────────────────────────
@@ -139,14 +154,25 @@ class ImportService {
         final fromSms = colFromSms != -1 && row.length > colFromSms ? _parseBool(row[colFromSms]) : false;
         final bankName = colBank != -1 && row.length > colBank ? row[colBank].toString() : null;
 
-        final category = ExpenseCategory.values.firstWhere(
-          (e) => e.name.toLowerCase() == categoryStr.toLowerCase() || e.label.toLowerCase() == categoryStr.toLowerCase(),
-          orElse: () => ExpenseCategory.other,
-        );
+        ExpenseCategory? expCat;
+        IncomeCategory? incCat;
+
+        if (isIncome) {
+          incCat = IncomeCategory.values.firstWhere(
+            (e) => e.name.toLowerCase() == categoryStr.toLowerCase() || e.label.toLowerCase() == categoryStr.toLowerCase(),
+            orElse: () => IncomeCategory.other,
+          );
+        } else {
+          expCat = ExpenseCategory.values.firstWhere(
+            (e) => e.name.toLowerCase() == categoryStr.toLowerCase() || e.label.toLowerCase() == categoryStr.toLowerCase(),
+            orElse: () => ExpenseCategory.other,
+          );
+        }
 
         expenses.add(ExpenseModel(
           amount: amount,
-          category: category,
+          expenseCategory: expCat,
+          incomeCategory: incCat,
           note: note,
           date: DateTime.parse(dateStr),
           isIncome: isIncome,
