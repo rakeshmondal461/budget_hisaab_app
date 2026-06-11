@@ -112,7 +112,14 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                       icon: Icons.arrow_upward,
                       isSelected: !_isIncome,
                       color: AppTheme.errorColor,
-                      onTap: () => setState(() => _isIncome = false),
+                      onTap: () => setState(() {
+                        _isIncome = false;
+                        if (_category == ExpenseCategory.salary ||
+                            _category == ExpenseCategory.freelance ||
+                            _category == ExpenseCategory.investment) {
+                          _category = ExpenseCategory.food;
+                        }
+                      }),
                     ),
                   ),
                   Expanded(
@@ -121,7 +128,15 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                       icon: Icons.arrow_downward,
                       isSelected: _isIncome,
                       color: AppTheme.successColor,
-                      onTap: () => setState(() => _isIncome = true),
+                      onTap: () => setState(() {
+                        _isIncome = true;
+                        if (_category != ExpenseCategory.salary &&
+                            _category != ExpenseCategory.freelance &&
+                            _category != ExpenseCategory.investment &&
+                            _category != ExpenseCategory.other) {
+                          _category = ExpenseCategory.salary;
+                        }
+                      }),
                     ),
                   ),
                 ],
@@ -159,7 +174,18 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
             Wrap(
               spacing: 8,
               runSpacing: 8,
-              children: ExpenseCategory.values.map((cat) {
+              children: ExpenseCategory.values.where((cat) {
+                if (_isIncome) {
+                  return cat == ExpenseCategory.salary ||
+                      cat == ExpenseCategory.freelance ||
+                      cat == ExpenseCategory.investment ||
+                      cat == ExpenseCategory.other;
+                } else {
+                  return cat != ExpenseCategory.salary &&
+                      cat != ExpenseCategory.freelance &&
+                      cat != ExpenseCategory.investment;
+                }
+              }).map((cat) {
                 final isSelected = _category == cat;
                 return GestureDetector(
                   onTap: () => setState(() => _category = cat),
@@ -251,7 +277,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                       : theme.colorScheme.primary,
                 ),
                 child: Text(
-                  isEditing ? 'Update Expense' : 'Save Expense',
+                  isEditing ? 'Update' : 'Save',
                   style: const TextStyle(
                       fontSize: 16, fontWeight: FontWeight.w700),
                 ),

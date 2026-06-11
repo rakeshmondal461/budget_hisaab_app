@@ -8,6 +8,9 @@ enum ExpenseCategory {
   health,
   entertainment,
   other,
+  salary,
+  freelance,
+  investment,
 }
 
 extension ExpenseCategoryExt on ExpenseCategory {
@@ -20,6 +23,9 @@ extension ExpenseCategoryExt on ExpenseCategory {
       case ExpenseCategory.health: return 'Health';
       case ExpenseCategory.entertainment: return 'Entertainment';
       case ExpenseCategory.other: return 'Other';
+      case ExpenseCategory.salary: return 'Salary';
+      case ExpenseCategory.freelance: return 'Freelance';
+      case ExpenseCategory.investment: return 'Investment';
     }
   }
 
@@ -32,6 +38,9 @@ extension ExpenseCategoryExt on ExpenseCategory {
       case ExpenseCategory.health: return '💊';
       case ExpenseCategory.entertainment: return '🎬';
       case ExpenseCategory.other: return '📦';
+      case ExpenseCategory.salary: return '💰';
+      case ExpenseCategory.freelance: return '💻';
+      case ExpenseCategory.investment: return '📈';
     }
   }
 }
